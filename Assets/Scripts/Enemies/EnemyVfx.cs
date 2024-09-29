@@ -5,8 +5,8 @@ namespace Enemies
     [RequireComponent(typeof(Enemy))]
     public class EnemyVfx : MonoBehaviour
     {
+        private VfxService vfxService;
         private Enemy _enemy;
-        [SerializeField] private RandomContainer<ParticleSystem> deathPrefabs;
 
         private void Reset() => FetchComponents();
 
@@ -19,6 +19,7 @@ namespace Enemies
 
         private void OnEnable()
         {
+            vfxService = ServiceLocator.Instance.GetService("VfxService") as VfxService;
             _enemy.OnDeath += HandleDeath;
         }
 
@@ -29,8 +30,9 @@ namespace Enemies
 
         private void HandleDeath()
         {
-            if(!deathPrefabs.TryGetRandom(out var prefab))
+            if (!vfxService.GetVfx().TryGetRandom(out var prefab)) 
                 return;
+
             var vfx = Instantiate(prefab, transform.position, transform.rotation);
             var mainModule = vfx.main;
             mainModule.stopAction = ParticleSystemStopAction.Destroy;

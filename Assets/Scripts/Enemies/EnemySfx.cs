@@ -6,9 +6,7 @@ namespace Enemies
     [RequireComponent(typeof(Enemy))]
     public class EnemySfx : MonoBehaviour
     {
-        [SerializeField] private AudioPlayer audioSourcePrefab;
-        [SerializeField] private RandomContainer<AudioClipData> spawnClips;
-        [SerializeField] private RandomContainer<AudioClipData> explosionClips;
+        private ServiceLocatorSfx sfx;
         private Enemy _enemy;
 
         private void Reset() => FetchComponents();
@@ -23,11 +21,8 @@ namespace Enemies
         
         private void OnEnable()
         {
-            if (!audioSourcePrefab)
-            {
-                Debug.LogError($"{nameof(audioSourcePrefab)} is null!");
-                return;
-            }
+            sfx = ServiceLocator.Instance.GetService("ServiceLocatorSfx") as ServiceLocatorSfx;
+            
             _enemy.OnSpawn += HandleSpawn;
             _enemy.OnDeath += HandleDeath;
         }
@@ -40,12 +35,12 @@ namespace Enemies
 
         private void HandleDeath()
         {
-            PlayRandomClip(explosionClips, audioSourcePrefab);
+            PlayRandomClip(sfx.GetExplosion(), sfx.GetAudioPrefab());
         }
 
         private void HandleSpawn()
         {
-            PlayRandomClip(spawnClips, audioSourcePrefab);
+            PlayRandomClip(sfx.GetSpawn(), sfx.GetAudioPrefab());
         }
 
         private void PlayRandomClip(RandomContainer<AudioClipData> container, AudioPlayer sourcePrefab)
