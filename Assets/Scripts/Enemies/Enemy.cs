@@ -98,11 +98,12 @@ namespace Enemies
                 {
                     healthComponent.TakeDamage(dmg);
                     structure.healthComponent.TakeDamage(dmg);
+
+                    if (!agent.hasPath)
+                    {
+                        healthComponent.TakeDamage(dmg);
+                    }
                 }
-            }
-            else
-            {
-                SetTargetToAliveStructure();
             }
         }
 
