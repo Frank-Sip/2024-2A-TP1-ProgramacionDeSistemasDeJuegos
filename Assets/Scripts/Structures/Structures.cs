@@ -1,31 +1,36 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class Structures : MonoBehaviour, IDeathLogic
 {
     public HealthComponent healthComponent;
-    [SerializeField] private float respawnCooldown = 3f;
-    private MeshRenderer mesh;
-
+    public float respawnCooldown = 3f;
+    
     private void Awake()
     {
         healthComponent = GetComponent<HealthComponent>();
-        mesh = GetComponent<MeshRenderer>();
+    }
+
+    private void OnEnable()
+    {
+        var structureService = ServiceLocator.Instance.GetService("StructureService") as StructureService;
+        structureService.RegisterStructure(this);
     }
 
     public void Die()
     {
-        gameObject.SetActive(false);
-        //mesh.enabled = false;
-        //StartCoroutine(Respawn());
+        var structureService = ServiceLocator.Instance.GetService("StructureService") as StructureService;
+        structureService.UnregisterStructure(this);
     }
 
-    private IEnumerator Respawn()
+    public IEnumerator Respawn()
     {
         yield return new WaitForSeconds(respawnCooldown);
-        mesh.enabled = true;
+
+        gameObject.SetActive(true);
         healthComponent.HealToMax();
     }
 }

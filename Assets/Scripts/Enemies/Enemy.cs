@@ -13,6 +13,8 @@ namespace Enemies
         private PoolManager poolManager;
         public HealthComponent healthComponent;
         private Structures structure;
+        private StructureService structureService;
+        private Transform target;
         [SerializeField] private float dmg;
         public event Action OnSpawn = delegate { };
         public event Action OnDeath = delegate { };
@@ -21,9 +23,10 @@ namespace Enemies
 
         private void Awake()
         {
-            structure = LookForClosestStructure()?.GetComponent<Structures>();
             FetchComponents();
+            structureService = ServiceLocator.Instance.GetService("StructureService") as StructureService;
             poolManager = PoolManager.Instance;
+            LookForClosestStructure();
         }
     
         private void FetchComponents()
@@ -46,45 +49,29 @@ namespace Enemies
             agent.Warp(spawnPosition);
             
             healthComponent.HealToMax();
-            SetTargetToAliveStructure();
             StartCoroutine(AlertSpawn());
         }
 
-        private IEnumerator RecycleAfterTime(float time)
+        private void LookForClosestStructure()
         {
-            yield return new WaitForSeconds(time);
-        }
-
-        private Transform LookForClosestStructure()
-        {
-            Structures[] structures = FindObjectsOfType<Structures>();
-            Transform closestStructure = null;
-            float minDistance = Mathf.Infinity; //Infinity para evitar errores por la distancia
-            
-            foreach (Structures structure in structures)
+            if (structureService != null)
             {
-                if (structure.healthComponent.CurrentHealth > 0)
+                Structures closestStructure = structureService.LookForClosestStructure(transform.position);
+                if (closestStructure != null)
                 {
-                    float distance = Vector3.Distance(structure.transform.position, transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestStructure = structure.transform;
-                    }
+                    target = closestStructure.transform;
+                    Vector3 destination = target.position;
+                    destination.y = transform.position.y;
+                    StartCoroutine(SetDestinationToClosestBuildingAfterWaiting(destination));
                 }
             }
-
-            return closestStructure;
         }
         
-        private void SetTargetToAliveStructure()
+        private IEnumerator SetDestinationToClosestBuildingAfterWaiting(Vector3 destination)
         {
-            Transform nearestStructure = LookForClosestStructure();
-            if (nearestStructure != null)
+            if (target != null)
             {
-                structure = nearestStructure.GetComponent<Structures>();
-                Vector3 destination = nearestStructure.position;
-                destination.y = transform.position.y;
+                yield return new WaitForSeconds(2);
                 agent.SetDestination(destination);
             }
         }
@@ -101,13 +88,10 @@ namespace Enemies
             {
                 if (agent.hasPath && Vector3.Distance(transform.position, agent.destination) <= agent.stoppingDistance)
                 {
+                    Debug.Log($"{name}: I'll die for my people!");
                     healthComponent.TakeDamage(dmg);
                     structure.healthComponent.TakeDamage(dmg);
                 }
-            }
-            else
-            {
-                SetTargetToAliveStructure();
             }
         }
 
