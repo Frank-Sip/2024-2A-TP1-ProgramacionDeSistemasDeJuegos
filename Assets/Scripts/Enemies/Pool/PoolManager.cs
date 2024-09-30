@@ -53,13 +53,11 @@ public class PoolManager : MonoBehaviour
     {
         if (!dictionary.ContainsKey(tag))
         {
-            Debug.LogWarning("Pool with tag " + tag + " doesn't exist.");
             return null;
         }
         
         if (dictionary[tag].Count == 0)
         {
-            Debug.Log("Pool empty. Creating a new object for tag " + tag);
             Pool pool = pools.Find(p => p.tag == tag);
             if (pool != null)
             {
@@ -71,7 +69,6 @@ public class PoolManager : MonoBehaviour
         
         if (!IsPositionValid(position))
         {
-            Debug.LogWarning("Spawn position invalid, falling back to default.");
             position = GetFallbackPosition();
         }
         
